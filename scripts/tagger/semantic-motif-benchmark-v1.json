@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "description": "Visually verified wallpaper anchors for semantic model comparisons.",
+  "anchors": [
+    {
+      "id": "anime-character",
+      "key": "corpus:1698a4a8e30c1688dc983bdf",
+      "path": "images/16/1698a4a8e30c1688dc983bdf39cb9485b08d336a6c0878c4ed7eccb8a848d477.jpg",
+      "title": "Anime Girl upright version.jpg",
+      "license": "CC BY-SA 3.0",
+      "visual": "Orange-haired anime woman in a pale floral scene.",
+      "queries": [
+        "anime girl with orange hair",
+        "illustrated woman with long orange hair",
+        "anime character on a pale floral background",
+        "animi girl with orenge hair",
+        "animeflicka med orange hår"
+      ]
+    },
+    {
+      "id": "misty-forest",
+      "key": "corpus:f3db0ae766e910a6c5379128",
+      "path": "images/f3/f3db0ae766e910a6c53791289ce66d153f63ee869744e763077d259b3f467cca.jpg",
+      "title": "Enchanting Forest",
+      "license": "CC0 1.0",
+      "visual": "Bright green tree-lined forest path with mist and sunlight.",
+      "queries": [
+        "misty green forest path",
+        "sunlight through trees in a forest",
+        "bright woodland trail",
+        "misty green forrest path",
+        "dimmig grön skogsstig"
+      ]
+    },
+    {
+      "id": "neon-night-street",
+      "key": "corpus:7ad3154a8abc30af042e9d76",
+      "path": "images/7a/7ad3154a8abc30af042e9d768a0dcaa85f50e621ca7cbd294f40d37ae9945db7.jpg",
+      "title": "Tokyo shopping street, Japan night",
+      "license": "CC0 1.0",
+      "visual": "Neon-lit Tokyo shopping street at night with people and signs.",
+      "queries": [
+        "busy neon Japanese street at night",
+        "Tokyo shopping street at night",
+        "people walking under colorful city signs",
+        "neon tokio street at nite",
+        "neonupplyst gata i Tokyo på natten"
+      ]
+    },
+    {
+      "id": "pink-geometric",
+      "key": "corpus:e7b7e64a31fa089f856904eb",
+      "path": "images/e7/e7b7e64a31fa089f856904eba3ef199d70bd884cb690457cbe3cd89275df77a3.jpg",
+      "title": "Abstract Geometric",
+      "license": "CC0 1.0",
+      "visual": "Wide pink and magenta low-poly geometric abstract.",
+      "queries": [
+        "pink geometric abstract wallpaper",
+        "low-poly pink shapes",
+        "magenta polygon background",
+        "pink geomtric abstract",
+        "rosa geometrisk abstrakt bakgrund"
+      ]
+    }
+  ]
+}

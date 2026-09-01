@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suites": [
+    {"id": "lens.toolchain", "class": "ordinary", "expectedSkips": 0, "coverage": "pinned Rust and Python toolchains"},
+    {"id": "lens.format", "class": "ordinary", "expectedSkips": 0, "coverage": "Rust formatting"},
+    {"id": "lens.clippy", "class": "ordinary", "expectedSkips": 0, "coverage": "all-target Rust lint"},
+    {"id": "lens.unsafe", "class": "ordinary", "expectedSkips": 0, "coverage": "unsafe inventory"},
+    {"id": "lens.rust", "class": "ordinary", "expectedSkips": 1, "coverage": "release workspace tests; one operator benchmark is ignored"},
+    {"id": "lens.release", "class": "ordinary", "expectedSkips": 0, "coverage": "release workspace build"},
+    {"id": "lens.python.environment", "class": "ordinary", "expectedSkips": 0, "coverage": "locked Python environment"},
+    {"id": "lens.python.ordinary", "class": "ordinary", "expectedSkips": 0, "coverage": "model-independent and mocked model tooling"},
+    {"id": "verify.repository", "class": "ordinary", "expectedSkips": 0, "coverage": "public system-verifier repository"},
+    {"id": "lens.python.heavy", "class": "heavy", "expectedSkips": 1, "coverage": "real model graph transforms"},
+    {"id": "lens.model-pack", "class": "model-pack", "expectedSkips": 1, "coverage": "immutable complete model-pack runtime and quality checks"},
+    {"id": "lens.gpu.cuda", "class": "gpu-provider", "expectedSkips": 1, "coverage": "CUDA throughput, memory, and parity"},
+    {"id": "lens.gpu.tensorrt", "class": "gpu-provider", "expectedSkips": 1, "coverage": "TensorRT throughput, memory, and parity"}
+  ]
+}

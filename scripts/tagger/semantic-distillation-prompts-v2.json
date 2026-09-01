@@ -1,0 +1,71 @@
+{
+  "format": 2,
+  "subjects": [
+    "airplane", "alien planet", "ancient ruins", "anime character", "astronaut",
+    "aurora", "beach", "bear", "bicycle", "bird", "boat", "bridge", "butterfly",
+    "cabin", "castle", "cat", "cave", "city skyline", "cliff", "clouds",
+    "coastline", "cottage", "desert", "dog", "dragon", "flowers", "forest",
+    "fox", "galaxy", "garden", "geometric shapes", "glacier", "harbor",
+    "island", "Japanese street", "lake", "lighthouse", "man", "meadow",
+    "moon", "motorcycle", "mountain", "nebula", "ocean", "old sailing ship",
+    "palace", "person", "planet", "rainy street", "river", "robot", "rowboat",
+    "samurai", "ship", "snowy peak", "space station", "spaceship", "sports car",
+    "star field", "storm", "street", "sunset", "surfer", "temple", "train",
+    "trees", "tropical lagoon", "underwater reef", "village", "waterfall",
+    "waves", "woman", "woodland path"
+  ],
+  "settings": [
+    "at blue hour", "at night", "at sunrise", "at sunset", "during a storm",
+    "in autumn", "in deep space", "in fog", "in heavy rain", "in spring",
+    "in summer", "in the countryside", "in the distance", "in winter",
+    "on calm water", "on the coast", "under a full moon", "under a starry sky"
+  ],
+  "styles": [
+    "3D render", "anime illustration", "charcoal drawing", "cinematic scene",
+    "digital painting", "film photograph", "ink illustration", "low-poly render",
+    "minimalist illustration", "oil painting", "paper cutout", "photograph",
+    "pixel art", "surreal artwork", "vintage poster", "watercolor"
+  ],
+  "qualities": [
+    "abstract", "bright", "calm", "colorful", "cozy", "dark", "dramatic",
+    "dreamlike", "foggy", "futuristic", "golden", "minimal", "misty", "moody",
+    "monochrome", "neon-lit", "peaceful", "soft", "symmetrical", "vibrant",
+    "wide-angle"
+  ],
+  "colors": [
+    "black and white", "blue", "blue and gold", "golden", "green", "muted earth tones",
+    "orange", "pastel", "pink", "purple", "red", "teal and orange", "white", "yellow"
+  ],
+  "templates": [
+    "{quality} {subject} {setting}",
+    "a {style} of a {quality} {subject}",
+    "{color} {subject} wallpaper",
+    "a {subject} {setting}, {style}",
+    "{quality} {color} {subject}",
+    "a {style} showing a {subject} {setting}",
+    "show me a {subject} {setting}",
+    "something with a {subject}",
+    "a wallpaper featuring a {subject}",
+    "I want a {quality} scene with a {subject}",
+    "an image where you can see a {subject} {setting}",
+    "find a {color} picture of a {subject}",
+    "a background that has a {subject} in it",
+    "a {subject} that feels {quality}",
+    "a close view of a {subject}",
+    "a wide view of a {subject} {setting}"
+  ],
+  "fixed": [
+    "quiet room lit by a desk lamp",
+    "rain reflecting colorful signs on wet pavement",
+    "small wooden vessel floating on a mountain lake",
+    "large canvas sails above rough ocean water",
+    "silhouette of a person against a bright horizon",
+    "soft clouds over distant blue hills",
+    "futuristic vehicle beneath tall city towers",
+    "sunbeams entering a dense green woodland",
+    "orange leaves beside a slow river",
+    "dark castle above a frozen valley",
+    "tiny cabin surrounded by deep snow",
+    "glowing jellyfish below the ocean surface"
+  ]
+}

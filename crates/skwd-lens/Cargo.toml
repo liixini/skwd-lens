@@ -1,0 +1,33 @@
+[package]
+name = "skwd-lens"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Native semantic indexing and natural-language image search for skwd"
+
+[dependencies]
+anyhow.workspace = true
+image.workspace = true
+memmap2.workspace = true
+ort = { version = "=2.0.0-rc.12", default-features = false, features = [
+    "api-24",
+    "load-dynamic",
+    "ndarray",
+    "std",
+] }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+skwd-lens-proto.workspace = true
+sentencepiece-rs = "=0.2.2"
+tokenizers = { version = "=0.22.2", default-features = false, features = ["onig"] }
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

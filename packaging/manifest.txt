@@ -1,0 +1,5 @@
+usr/bin/skwd-lens
+usr/share/licenses/skwd-lens/LICENSE
+usr/share/licenses/skwd-lens/third-party/Apache-2.0.txt
+usr/share/licenses/skwd-lens/third-party/CC-BY-4.0.txt
+usr/share/licenses/skwd-lens/third-party/MIT.txt

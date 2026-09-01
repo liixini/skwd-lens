@@ -1,0 +1,13 @@
+usr/bin/skwd-lens
+usr/share/licenses/skwd-lens/LICENSE
+usr/share/licenses/skwd-lens/third-party/Apache-2.0.txt
+usr/share/licenses/skwd-lens/third-party/CC-BY-4.0.txt
+usr/share/licenses/skwd-lens/third-party/MIT.txt
+usr/share/skwd-lens/models/semantic/runtime/libonnxruntime.so.1.27.0
+usr/share/skwd-lens/models/semantic/runtime/libonnxruntime_providers_shared.so
+usr/share/skwd-lens/models/semantic/semantic-pack.json
+usr/share/skwd-lens/models/semantic/siglip2-base-p16-224-text-int8-split-b1.onnx
+usr/share/skwd-lens/models/semantic/siglip2-image-int8-attention.onnx
+usr/share/skwd-lens/models/semantic/siglip2-image-int8-attention.onnx.data
+usr/share/skwd-lens/models/semantic/siglip2-token-embedding-int8.bin
+usr/share/skwd-lens/models/semantic/tokenizer/tokenizer.model

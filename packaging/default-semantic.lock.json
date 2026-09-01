@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "product": "siglip2-base-p16-224@google-image-int8-attention-text-int8-stretch-v4",
+  "runtimeVersion": "1.27.0",
+  "files": [
+    {
+      "path": "runtime/libonnxruntime.so.1.27.0",
+      "source": "runtime",
+      "size": 23736336,
+      "sha256": "184096f611d6cfff75f5d4cbaf01f76d736ab10d408d335fca0c85e5a79018db"
+    },
+    {
+      "path": "runtime/libonnxruntime_providers_shared.so",
+      "source": "runtime",
+      "size": 14632,
+      "sha256": "086ec1d5388f64153d9c63470d126693db9a182c8ce236d3a1119068471b8a0d"
+    },
+    {
+      "path": "semantic-pack.json",
+      "source": "manifest",
+      "size": 989,
+      "sha256": "a382f002c2503b882d312067fef5ebb6b719df34d54270525a1b02b5f9f27e44"
+    },
+    {
+      "path": "siglip2-base-p16-224-text-int8-split-b1.onnx",
+      "source": "payload",
+      "size": 86786519,
+      "sha256": "b0596ee90d05e5271173fffc29790a786e463c714a2d24f1153df38e4e8b0bf4"
+    },
+    {
+      "path": "siglip2-image-int8-attention.onnx",
+      "source": "payload",
+      "size": 478654,
+      "sha256": "ef85dca6145aae7c5b3232a5a386691dbdb9a23e70b17dde1c3b1333a1303150"
+    },
+    {
+      "path": "siglip2-image-int8-attention.onnx.data",
+      "source": "payload",
+      "size": 286603808,
+      "sha256": "7436add5a09aa55f23f31de7f6f0f53a3930b256e14a929661e7a0bf793bc5cf"
+    },
+    {
+      "path": "siglip2-token-embedding-int8.bin",
+      "source": "payload",
+      "size": 196608024,
+      "sha256": "6ae9f714054c516e4c74749f09c78df3b203a1d65dce51a8b319da18879844cd"
+    },
+    {
+      "path": "tokenizer/tokenizer.model",
+      "source": "payload",
+      "size": 4241003,
+      "sha256": "61a7b147390c64585d6c3543dd6fc636906c9af3865a5548f27f31aee1d4c8e2"
+    }
+  ]
+}

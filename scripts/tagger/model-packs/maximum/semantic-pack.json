@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "id": "siglip2-base-p16-224",
+  "version": "google-image-int8-attention-text-int8-stretch-v4",
+  "dimensions": 768,
+  "contextLength": 64,
+  "image": {
+    "model": "siglip2-image-int8-attention.onnx",
+    "input": "pixel_values",
+    "output": "embedding",
+    "resizeMode": "stretch",
+    "width": 224,
+    "height": 224,
+    "batchSize": 1,
+    "mean": [0.5, 0.5, 0.5],
+    "std": [0.5, 0.5, 0.5]
+  },
+  "text": {
+    "model": "siglip2-base-p16-224-text-int8-split-b1.onnx",
+    "tokenizer": "tokenizer/tokenizer.model",
+    "input": "input_ids",
+    "attentionMask": "attention_mask",
+    "maskPadding": false,
+    "lowercase": true,
+    "output": "embedding",
+    "eosToken": 1,
+    "padToken": 0,
+    "tokenEmbeddings": {
+      "table": "siglip2-token-embedding-int8.bin",
+      "input": "/text_model/embeddings/token_embedding/Gather_output_0",
+      "rows": 256000,
+      "dimensions": 768,
+      "scale": 0.06170818954706192,
+      "zeroPoint": 136
+    }
+  }
+}

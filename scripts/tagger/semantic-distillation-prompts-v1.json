@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "subjects": [
+    "mountain", "forest", "ocean", "desert", "waterfall", "lake", "city skyline",
+    "street", "spaceship", "planet", "castle", "temple", "cottage", "cat", "fox",
+    "bird", "woman", "man", "robot", "sports car", "motorcycle", "flowers", "trees",
+    "geometric shapes", "clouds", "island", "bridge", "train", "dragon", "samurai"
+  ],
+  "settings": [
+    "at night", "at sunrise", "at sunset", "in winter", "in autumn", "in fog",
+    "underwater", "in space", "in a meadow", "in the rain", "under a starry sky",
+    "beside a river", "on a cliff", "in Tokyo", "in the countryside"
+  ],
+  "styles": [
+    "photograph", "digital painting", "anime illustration", "watercolor", "oil painting",
+    "low-poly render", "minimalist illustration", "cinematic scene", "pixel art",
+    "paper cutout", "surreal artwork", "vintage poster"
+  ],
+  "qualities": [
+    "bright", "dark", "moody", "peaceful", "dramatic", "colorful", "monochrome",
+    "pastel", "neon-lit", "cozy", "misty", "abstract", "symmetrical", "wide-angle"
+  ],
+  "colors": [
+    "red", "orange", "yellow", "green", "blue", "purple", "pink", "black and white",
+    "teal and orange", "golden", "muted earth tones"
+  ],
+  "templates": [
+    "{quality} {subject} {setting}",
+    "a {style} of a {quality} {subject}",
+    "{color} {subject} wallpaper",
+    "a {subject} {setting}, {style}",
+    "{quality} {color} {subject}",
+    "a {style} showing a {subject} {setting}"
+  ],
+  "fixed": [
+    "anime girl with orange hair", "misty green forest path", "busy neon Japanese street at night",
+    "pink geometric abstract wallpaper", "sunlight through trees", "low-poly magenta shapes",
+    "people walking under colorful city signs", "bright woodland trail",
+    "dimmig grön skogsstig", "neonupplyst gata i Tokyo på natten",
+    "rosa geometrisk abstrakt bakgrund", "animi girl with orenge hair"
+  ]
+}

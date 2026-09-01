@@ -1,0 +1,70 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/skwd-lens",
+    "crates/skwd-lens-proto",
+]
+
+[workspace.package]
+version = "1.0.0-beta.1"
+edition = "2024"
+rust-version = "1.93"
+license = "GPL-3.0-or-later"
+authors = ["liixini"]
+repository = "http://192.168.1.41:3000/liixini/skwd-lens"
+homepage = "http://192.168.1.41:3000/liixini/skwd-lens"
+
+[workspace.dependencies]
+anyhow = "1"
+image = { version = "0.25", default-features = false, features = [
+    "jpeg",
+    "png",
+    "webp",
+    "bmp",
+    "gif",
+    "tiff",
+    "pnm",
+] }
+memmap2 = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+skwd-lens-proto = { path = "crates/skwd-lens-proto" }
+tempfile = "3"
+tokio = { version = "1", default-features = false, features = [
+    "io-std",
+    "io-util",
+    "rt",
+] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+
+[profile.dev]
+opt-level = 1
+
+[workspace.lints.rust]
+unsafe_code = "allow"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+await_holding_lock = "deny"
+unused_async = "deny"
+
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+cast_lossless = "allow"
+float_cmp = "allow"
+
+manual_let_else = "deny"
+map_unwrap_or = "deny"

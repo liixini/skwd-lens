@@ -1,0 +1,131 @@
+name: lens-verify
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lens-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Forgejo / Lens required
+    runs-on: skwd-wall-next-ci
+    timeout-minutes: 60
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: "1"
+      SKWD_RUNNER_IMAGE: sha256:66058d5c15a5011188ee634bb909d730c279ab0d65408581b5d70e99a6970edb
+      SKWD_VERIFY_ROOT: .skwd-verify
+      SKWD_LENS_TEST_ENV: /tmp/skwd-lens-venv-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Check out Lens
+        uses: https://code.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Check out suite verifier
+        continue-on-error: true
+        uses: https://code.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: liixini/skwd-verify
+          ref: 43766a72f2d3f46072c68c4fb4735d9482bf5059
+          path: .skwd-verify
+          token: ${{ secrets.SKWD_SUITE_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Restore Cargo downloads
+        uses: https://code.forgejo.org/actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            /usr/local/cargo/registry
+            /usr/local/cargo/git
+          key: lens-cargo-linux-rust-1.94.1-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            lens-cargo-linux-rust-1.94.1-
+
+      - name: Create result directory
+        run: mkdir -p ci-artifacts/results
+
+      - name: Verify toolchains
+        continue-on-error: true
+        run: >-
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.toolchain
+          --out ci-artifacts/results/lens-toolchain.json --
+          bash -euo pipefail -c 'test "$(rustc --version | awk '\''{print $2}'\'')" = 1.94.1;
+          test "$(python3 -c '\''import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'\'')" = 3.12;
+          cargo --version; cargo clippy --version; cargo fmt --version; python3 --version'
+
+      - name: Format
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.format --out ci-artifacts/results/lens-format.json -- cargo fmt --check
+
+      - name: Clippy
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.clippy --out ci-artifacts/results/lens-clippy.json -- cargo clippy --locked --workspace --all-targets -- -D warnings
+
+      - name: Unsafe inventory
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.unsafe --out ci-artifacts/results/lens-unsafe.json -- "$SKWD_VERIFY_ROOT/scripts/check-unsafe-code.sh"
+
+      - name: Rust tests
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.rust --expected-skips 1 --out ci-artifacts/results/lens-rust.json -- cargo test --locked --release --workspace
+
+      - name: Release build
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.release --out ci-artifacts/results/lens-release.json -- cargo build --locked --release --workspace
+
+      - name: Prepare Python environment
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.python.environment --out ci-artifacts/results/lens-python-environment.json -- scripts/setup-lens-test-env.sh
+
+      - name: Run ordinary Python suite
+        continue-on-error: true
+        shell: bash
+        run: |
+          nvidia_library_path=$("${SKWD_LENS_TEST_ENV}/bin/python" -c '
+          import site
+          from pathlib import Path
+          print(":".join(sorted(str(path) for root in site.getsitepackages() for path in (Path(root) / "nvidia").glob("*/lib") if path.is_dir())))
+          ')
+          if [ -n "${LD_LIBRARY_PATH:-}" ]; then
+            nvidia_library_path="${nvidia_library_path:+$nvidia_library_path:}$LD_LIBRARY_PATH"
+          fi
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.python.ordinary --out ci-artifacts/results/lens-python-ordinary.json -- env LD_LIBRARY_PATH="$nvidia_library_path" PYTHONDONTWRITEBYTECODE=1 "${SKWD_LENS_TEST_ENV}/bin/python" "$SKWD_VERIFY_ROOT/scripts/python_suite.py" python-lens
+
+      - name: Verify public suite harness
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite verify.repository --out ci-artifacts/results/verify-repository.json -- "$SKWD_VERIFY_ROOT/scripts/test-all.sh"
+
+      - name: Record deliberate operator coverage
+        if: always()
+        run: |
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.python.heavy --reason 'operator-only real model graph suite' --out ci-artifacts/results/lens-python-heavy.json
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.model-pack --reason 'requires an immutable complete model pack and runtime' --out ci-artifacts/results/lens-model-pack.json
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.gpu.cuda --reason 'requires a declared CUDA hardware runner' --out ci-artifacts/results/lens-gpu-cuda.json
+          python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.gpu.tensorrt --reason 'requires a declared TensorRT hardware runner' --out ci-artifacts/results/lens-gpu-tensorrt.json
+
+      - name: Record exact execution provenance
+        if: always()
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-provenance.py" --out ci-artifacts/provenance.json --runner-image "$SKWD_RUNNER_IMAGE" --toolchains --catalog scripts/ci_suite_catalog.json
+
+      - name: Aggregate required results
+        if: always()
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" aggregate --catalog scripts/ci_suite_catalog.json --results ci-artifacts/results
+
+      - name: Retain reports and provenance
+        if: always()
+        uses: https://code.forgejo.org/actions/upload-artifact@c6a3b2bd78b3985e4b2f15397fec357f0fd808de
+        with:
+          name: lens-required-${{ github.sha }}
+          path: ci-artifacts
+          if-no-files-found: error
+          retention-days: 14
