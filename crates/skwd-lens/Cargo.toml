@@ -9,6 +9,7 @@ homepage.workspace = true
 description = "Native semantic indexing and natural-language image search for skwd"
 
 [dependencies]
+bitflags = { version = "2", features = ["std"] }
 anyhow.workspace = true
 image.workspace = true
 memmap2.workspace = true
@@ -28,6 +29,9 @@ tokio.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["bitflags"]
 
 [lints]
 workspace = true

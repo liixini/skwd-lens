@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import lzma
 import os
+import shutil
 import stat
+import subprocess
 import tarfile
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -15,6 +16,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LOCK = ROOT / "packaging/default-semantic.lock.json"
+DEFAULT_PIN = ROOT / "packaging/skwd-lens-model-1.0.0.tar.xz.sha256"
 SEMANTIC_ROOT = PurePosixPath("usr/share/skwd-lens/models/semantic")
 PACKAGE_NAME = "skwd-lens-model"
 PINNED_PRODUCT = "siglip2-base-p16-224@google-image-int8-attention-text-int8-stretch-v4"
@@ -140,9 +142,17 @@ def license_files() -> list[tuple[str, Path]]:
 
 def write_archive(files: list[tuple[str, Path]], output: Path, prefix: str, epoch: int) -> None:
     directories = sorted({str(PurePosixPath(name).parent) for name, _ in files} - {"."})
+    xz = shutil.which("xz")
+    if xz is None:
+        raise PackageError("xz is required to write the model archive")
     with output.open("wb") as raw:
-        with lzma.LZMAFile(raw, "wb", format=lzma.FORMAT_XZ, preset=6) as compressed:
-            with tarfile.open(fileobj=compressed, mode="w", format=tarfile.PAX_FORMAT) as archive:
+        process = subprocess.Popen(
+            [xz, "-6", "--threads=4", "--block-size=64MiB", "--no-adjust", "-c"],
+            stdin=subprocess.PIPE,
+            stdout=raw,
+        )
+        try:
+            with tarfile.open(fileobj=process.stdin, mode="w|", format=tarfile.PAX_FORMAT) as archive:
                 for name in [""] + directories:
                     info = tarfile.TarInfo(f"{prefix}/{name}".rstrip("/"))
                     info.type = tarfile.DIRTYPE
@@ -160,6 +170,10 @@ def write_archive(files: list[tuple[str, Path]], output: Path, prefix: str, epoc
                     info.uname = info.gname = "root"
                     with source.open("rb") as handle:
                         archive.addfile(info, handle)
+        finally:
+            process.stdin.close()
+        if process.wait() != 0:
+            raise PackageError(f"xz failed with exit status {process.returncode}")
 
 
 def main() -> None:
@@ -169,6 +183,7 @@ def main() -> None:
     parser.add_argument("asset", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--lock", type=Path, default=DEFAULT_LOCK)
+    parser.add_argument("--pin", type=Path, default=DEFAULT_PIN)
     arguments = parser.parse_args()
 
     epoch = int(os.environ.get("SOURCE_DATE_EPOCH", "0"))
@@ -187,12 +202,20 @@ def main() -> None:
         files.extend(license_files())
         files.sort(key=lambda entry: entry[0])
         write_archive(files, archive_path, prefix, epoch)
+    digest = sha256(archive_path)
+    if arguments.pin.exists():
+        expected = arguments.pin.read_text(encoding="utf-8").split()[0]
+        if digest != expected:
+            archive_path.unlink()
+            raise PackageError(
+                f"model archive digest {digest} does not match the pinned {expected}"
+            )
 
     print(
         json.dumps(
             {
                 "archive": str(archive_path),
-                "sha256": sha256(archive_path),
+                "sha256": digest,
                 "bytes": archive_path.stat().st_size,
                 "package": PACKAGE_NAME,
                 "version": MODEL_VERSION,

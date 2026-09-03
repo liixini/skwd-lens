@@ -957,6 +957,7 @@ name = "skwd-lens"
 version = "1.0.0-beta.4"
 dependencies = [
  "anyhow",
+ "bitflags",
  "image",
  "memmap2",
  "ort",

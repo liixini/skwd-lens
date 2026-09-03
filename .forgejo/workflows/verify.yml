@@ -16,10 +16,12 @@ concurrency:
 jobs:
   verify:
     name: Forgejo / Lens required
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '(#')
     runs-on: skwd-wall-next-ci
-    timeout-minutes: 60
+    timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_RELEASE_PANIC: unwind
       CARGO_TERM_COLOR: always
       RUST_BACKTRACE: "1"
       SKWD_RUNNER_IMAGE: sha256:66058d5c15a5011188ee634bb909d730c279ab0d65408581b5d70e99a6970edb
@@ -68,6 +70,7 @@ jobs:
         run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.format --out ci-artifacts/results/lens-format.json -- cargo fmt --check
 
       - name: Clippy
+        id: clippy
         continue-on-error: true
         run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.clippy --out ci-artifacts/results/lens-clippy.json -- cargo clippy --locked --workspace --all-targets -- -D warnings
 
@@ -75,13 +78,17 @@ jobs:
         continue-on-error: true
         run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.unsafe --out ci-artifacts/results/lens-unsafe.json -- "$SKWD_VERIFY_ROOT/scripts/check-unsafe-code.sh"
 
-      - name: Rust tests
-        continue-on-error: true
-        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.rust --expected-skips 1 --out ci-artifacts/results/lens-rust.json -- cargo test --locked --release --workspace
-
       - name: Release build
+        id: release
+        if: steps.clippy.outcome == 'success'
         continue-on-error: true
         run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.release --out ci-artifacts/results/lens-release.json -- cargo build --locked --release --workspace
+
+      - name: Rust tests
+        id: tests
+        if: steps.release.outcome == 'success'
+        continue-on-error: true
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite lens.rust --expected-skips 1 --out ci-artifacts/results/lens-rust.json -- cargo test --locked --release --workspace
 
       - name: Prepare Python environment
         continue-on-error: true
@@ -112,6 +119,19 @@ jobs:
           python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.model-pack --reason 'requires an immutable complete model pack and runtime' --out ci-artifacts/results/lens-model-pack.json
           python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.gpu.cuda --reason 'requires a declared CUDA hardware runner' --out ci-artifacts/results/lens-gpu-cuda.json
           python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" skip --suite lens.gpu.tensorrt --reason 'requires a declared TensorRT hardware runner' --out ci-artifacts/results/lens-gpu-tensorrt.json
+
+      - name: Record blocked suites
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          present=$(jq -r .suite ci-artifacts/results/*.json)
+          jq -r '.suites[].id' scripts/ci_suite_catalog.json | while read -r suite; do
+            if ! printf '%s\n' "$present" | grep -qx -- "$suite"; then
+              python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" emit --suite "$suite" --ok false --detail 'BLOCKED: an earlier required gate failed' --out "ci-artifacts/results/$(printf '%s' "$suite" | tr . -).json"
+            fi
+          done
 
       - name: Record exact execution provenance
         if: always()
