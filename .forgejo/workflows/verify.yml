@@ -26,12 +26,16 @@ jobs:
       RUST_BACKTRACE: "1"
       SKWD_RUNNER_IMAGE: sha256:66058d5c15a5011188ee634bb909d730c279ab0d65408581b5d70e99a6970edb
       SKWD_VERIFY_ROOT: .skwd-verify
-      SKWD_LENS_TEST_ENV: /tmp/skwd-lens-venv-${{ github.run_id }}-${{ github.run_attempt }}
+      SKWD_LENS_TEST_ENV: /var/tmp/skwd-lens-venv-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: /var/tmp/skwd-lens-tmp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Check out Lens
         uses: https://code.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+
+      - name: Create result and temporary directories
+        run: mkdir -p ci-artifacts/results "$TMPDIR"
 
       - name: Check out suite verifier
         continue-on-error: true
@@ -52,9 +56,6 @@ jobs:
           key: lens-cargo-linux-rust-1.94.1-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             lens-cargo-linux-rust-1.94.1-
-
-      - name: Create result directory
-        run: mkdir -p ci-artifacts/results
 
       - name: Verify toolchains
         continue-on-error: true
