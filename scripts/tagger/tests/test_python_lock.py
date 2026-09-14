@@ -139,9 +139,10 @@ class PythonLockTests(unittest.TestCase):
         self.assertNotIn("path: .venv-lens", workflow)
         self.assertNotIn("lens-python-3.12-", workflow)
         self.assertIn(
-            "SKWD_LENS_TEST_ENV: /tmp/skwd-lens-venv-${{ github.run_id }}-${{ github.run_attempt }}",
+            "SKWD_LENS_TEST_ENV: /var/tmp/skwd-lens-venv-${{ github.run_id }}-${{ github.run_attempt }}",
             workflow,
         )
+        self.assertIn("TMPDIR: /var/tmp/skwd-lens-tmp-${{ github.run_id }}-${{ github.run_attempt }}", workflow)
         self.assertEqual(workflow.count('"${SKWD_LENS_TEST_ENV}/bin/python"'), 2)
 
 
