@@ -17,6 +17,7 @@ use super::{
 
 mod catalog;
 mod lifecycle;
+mod removal;
 
 use lifecycle::{ImportMode, InstallReport};
 pub(super) use lifecycle::{

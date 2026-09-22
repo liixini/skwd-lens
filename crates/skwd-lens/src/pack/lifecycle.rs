@@ -63,6 +63,10 @@ pub(crate) enum LifecycleCommand {
         id: String,
         version: Option<String>,
         component: Option<String>,
+        allow_active: bool,
+    },
+    RemoveManifest {
+        manifest: PathBuf,
     },
     Repair {
         models_dir: PathBuf,
@@ -110,6 +114,7 @@ pub(crate) enum LifecycleReport {
     Doctor(DoctorReport),
     Rollback(RollbackReport),
     Remove(RemoveReport),
+    RemoveManifest(super::removal::RemovalReport),
     Repair(RepairReport),
 }
 
@@ -273,7 +278,7 @@ pub(crate) fn failure_report(operation: Operation, error: &anyhow::Error) -> Fai
 }
 
 pub(crate) fn requested_operation(arguments: &[String]) -> Option<Operation> {
-    const FLAGS: [(&str, Operation); 9] = [
+    const FLAGS: [(&str, Operation); 10] = [
         ("--install-pack", Operation::Install),
         ("--update-pack", Operation::Update),
         ("--replace-pack", Operation::Replace),
@@ -282,6 +287,7 @@ pub(crate) fn requested_operation(arguments: &[String]) -> Option<Operation> {
         ("--doctor-pack", Operation::Doctor),
         ("--rollback-pack", Operation::Rollback),
         ("--remove-pack", Operation::Remove),
+        ("--remove-manifest", Operation::Remove),
         ("--repair-pack-state", Operation::Repair),
     ];
     FLAGS.iter().find_map(|(flag, operation)| {
@@ -299,6 +305,7 @@ pub(crate) fn parse_command(arguments: &[String]) -> anyhow::Result<Option<Lifec
         ("--doctor-pack", Operation::Doctor),
         ("--rollback-pack", Operation::Rollback),
         ("--remove-pack", Operation::Remove),
+        ("--remove-manifest", Operation::Remove),
         ("--repair-pack-state", Operation::Repair),
     ]
     .into_iter()
@@ -317,6 +324,10 @@ pub(crate) fn parse_command(arguments: &[String]) -> anyhow::Result<Option<Lifec
     }
     let (_, operation) = requested[0];
     validate_lifecycle_syntax(arguments, operation)?;
+    if let Some(manifest) = optional_value(arguments, "--remove-manifest") {
+        ensure!(arguments.len() == 3, "--remove-manifest accepts only the model manifest path");
+        return Ok(Some(LifecycleCommand::RemoveManifest { manifest: PathBuf::from(manifest) }));
+    }
     let models_dir = required_value(arguments, "--models-dir").map(PathBuf::from)?;
     let threads = optional_number(arguments, "--threads")?.unwrap_or(4);
     ensure!(threads > 0, "--threads must be positive");
@@ -374,6 +385,7 @@ pub(crate) fn parse_command(arguments: &[String]) -> anyhow::Result<Option<Lifec
                 id: required_value(arguments, "--remove-pack")?.to_string(),
                 version,
                 component,
+                allow_active: arguments.iter().any(|value| value == "--allow-active"),
             }
         }
         Operation::Repair => LifecycleCommand::Repair {
@@ -385,7 +397,7 @@ pub(crate) fn parse_command(arguments: &[String]) -> anyhow::Result<Option<Lifec
 }
 
 fn validate_lifecycle_syntax(arguments: &[String], operation: Operation) -> anyhow::Result<()> {
-    const KNOWN: [(&str, bool); 15] = [
+    const KNOWN: [(&str, bool); 17] = [
         ("--install-pack", true),
         ("--update-pack", true),
         ("--replace-pack", true),
@@ -394,6 +406,8 @@ fn validate_lifecycle_syntax(arguments: &[String], operation: Operation) -> anyh
         ("--doctor-pack", true),
         ("--rollback-pack", true),
         ("--remove-pack", true),
+        ("--remove-manifest", true),
+        ("--allow-active", false),
         ("--repair-pack-state", false),
         ("--models-dir", true),
         ("--runtime", true),
@@ -412,9 +426,14 @@ fn validate_lifecycle_syntax(arguments: &[String], operation: Operation) -> anyh
             &["--doctor-pack", "--models-dir", "--runtime", "--threads", "--index"]
         }
         Operation::Rollback => &["--rollback-pack", "--models-dir"],
-        Operation::Remove => {
-            &["--remove-pack", "--models-dir", "--pack-version", "--pack-component"]
-        }
+        Operation::Remove => &[
+            "--remove-pack",
+            "--remove-manifest",
+            "--models-dir",
+            "--pack-version",
+            "--pack-component",
+            "--allow-active",
+        ],
         Operation::Repair => &["--repair-pack-state", "--models-dir", "--pack-component"],
     };
     let mut seen = std::collections::HashSet::new();
@@ -724,8 +743,9 @@ pub(super) fn remove(
     id: &str,
     version: Option<&str>,
     component: Option<&str>,
+    allow_active: bool,
 ) -> anyhow::Result<RemoveReport> {
-    remove_with(models_dir, id, version, component, save_state)
+    remove_with(models_dir, id, version, component, allow_active, save_state)
 }
 
 pub(super) fn remove_with<F>(
@@ -733,6 +753,7 @@ pub(super) fn remove_with<F>(
     id: &str,
     version: Option<&str>,
     component: Option<&str>,
+    allow_active: bool,
     save: F,
 ) -> anyhow::Result<RemoveReport>
 where
@@ -768,7 +789,7 @@ where
         .into());
     }
     let target = matches[0];
-    if target.role == PackRole::Active {
+    if target.role == PackRole::Active && !allow_active {
         return Err(LifecycleError::new(
             "active_pack",
             format!("refusing to remove active component {}", target.component),
@@ -778,6 +799,10 @@ where
     }
     let mut state = catalog.state;
     let mut changed = false;
+    if target.role == PackRole::Active {
+        state.packs.remove(id);
+        changed = true;
+    }
     if let Some(track) = state.packs.get_mut(id)
         && track.previous.as_ref().is_some_and(|value| value.component == target.component)
     {
@@ -1269,9 +1294,12 @@ pub(crate) fn execute(command: LifecycleCommand) -> anyhow::Result<LifecycleRepo
         LifecycleCommand::Rollback { models_dir, id } => {
             rollback(&models_dir, &id).map(LifecycleReport::Rollback)
         }
-        LifecycleCommand::Remove { models_dir, id, version, component } => {
-            remove(&models_dir, &id, version.as_deref(), component.as_deref())
+        LifecycleCommand::Remove { models_dir, id, version, component, allow_active } => {
+            remove(&models_dir, &id, version.as_deref(), component.as_deref(), allow_active)
                 .map(LifecycleReport::Remove)
+        }
+        LifecycleCommand::RemoveManifest { manifest } => {
+            super::removal::remove(&manifest).map(LifecycleReport::RemoveManifest)
         }
         LifecycleCommand::Repair { models_dir, component } => {
             repair(&models_dir, component.as_deref()).map(LifecycleReport::Repair)
