@@ -333,4 +333,27 @@ fn public_cli_import_update_rollback_doctor_resolve_and_remove_real_models() {
     ]));
     assert_eq!(removed["removed"], true);
     assert!(!models.join(retired_component).exists());
+    let active_component = rolled_back["active"]["component"].as_str().unwrap();
+    let refused = lens(&[
+        "--remove-pack",
+        "cli/real",
+        "--pack-component",
+        active_component,
+        "--models-dir",
+        models_arg,
+    ]);
+    assert_eq!(failure_json(&refused)["error"]["code"], "active_pack");
+    let removed = output_json(&lens(&[
+        "--remove-pack",
+        "cli/real",
+        "--pack-component",
+        active_component,
+        "--models-dir",
+        models_arg,
+        "--allow-active",
+    ]));
+    assert_eq!(removed["removed"], true);
+    assert!(!models.join(active_component).exists());
+    let status = lens(&["--pack-status", "cli/real", "--models-dir", models_arg]);
+    assert!(!status.status.success());
 }

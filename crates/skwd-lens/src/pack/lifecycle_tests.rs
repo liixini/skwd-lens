@@ -223,12 +223,12 @@ fn safe_remove_refuses_active_then_removes_previous_and_orphan() {
     let active = state.packs["example/model"].active.clone();
     let previous = state.packs["example/model"].previous.clone().unwrap();
 
-    let error = remove(&models, "example/model", None, Some(&active.component)).unwrap_err();
+    let error = remove(&models, "example/model", None, Some(&active.component), false).unwrap_err();
     assert!(error.to_string().contains("refusing to remove active"));
     assert!(models.join(&active.component).is_dir());
 
     let report = serde_json::to_value(
-        remove(&models, "example/model", None, Some(&previous.component)).unwrap(),
+        remove(&models, "example/model", None, Some(&previous.component), false).unwrap(),
     )
     .unwrap();
     assert_eq!(report["removed"], true);
@@ -238,7 +238,8 @@ fn safe_remove_refuses_active_then_removes_previous_and_orphan() {
     let orphan = candidate(&sources, "orphan", "3", "orphan");
     fs::rename(&orphan, models.join("orphan-component")).unwrap();
     let report =
-        serde_json::to_value(remove(&models, "example/model", Some("3"), None).unwrap()).unwrap();
+        serde_json::to_value(remove(&models, "example/model", Some("3"), None, false).unwrap())
+            .unwrap();
     assert_eq!(report["component"], "orphan-component");
     assert!(!models.join("orphan-component").exists());
 }
@@ -279,10 +280,11 @@ fn failed_remove_state_publication_restores_files_and_rollback_pointer() {
     let before = load_state(&models).unwrap();
     let previous = before.packs["example/model"].previous.as_ref().unwrap().clone();
 
-    let error = remove_with(&models, "example/model", None, Some(&previous.component), |_, _| {
-        anyhow::bail!("simulated state failure")
-    })
-    .unwrap_err();
+    let error =
+        remove_with(&models, "example/model", None, Some(&previous.component), false, |_, _| {
+            anyhow::bail!("simulated state failure")
+        })
+        .unwrap_err();
 
     assert!(format!("{error:#}").contains("simulated state failure"));
     assert_eq!(load_state(&models).unwrap(), before);
@@ -551,4 +553,60 @@ fn shipped_pack_lock_and_manifest_are_consistent() {
     for license in ["Apache-2.0.txt", "CC-BY-4.0.txt", "MIT.txt"] {
         assert!(package_manifest.contains(license));
     }
+}
+
+#[test]
+fn explicit_active_removal_clears_selection_and_preserves_other_components() {
+    let directory = tempfile::tempdir().unwrap();
+    let models = directory.path().join("models");
+    let sources = directory.path().join("sources");
+    fs::create_dir_all(&models).unwrap();
+    fs::create_dir_all(&sources).unwrap();
+    activate(&models, &candidate(&sources, "v1", "1", "first"), ImportMode::Install);
+    activate(&models, &candidate(&sources, "v2", "2", "second"), ImportMode::Update);
+    let state = load_state(&models).unwrap();
+    let track = &state.packs["example/model"];
+    let active = models.join(&track.active.component);
+    let previous = models.join(&track.previous.as_ref().unwrap().component);
+    remove(&models, "example/model", None, Some(&track.active.component), true).unwrap();
+    assert!(!active.exists());
+    assert!(previous.is_dir());
+    assert!(!load_state(&models).unwrap().packs.contains_key("example/model"));
+}
+
+#[test]
+fn failed_active_removal_restores_files_and_selection() {
+    let directory = tempfile::tempdir().unwrap();
+    let models = directory.path().join("models");
+    let sources = directory.path().join("sources");
+    fs::create_dir_all(&models).unwrap();
+    fs::create_dir_all(&sources).unwrap();
+    activate(&models, &candidate(&sources, "v1", "1", "first"), ImportMode::Install);
+    let state = load_state(&models).unwrap();
+    let active = &state.packs["example/model"].active;
+    let error =
+        remove_with(&models, "example/model", None, Some(&active.component), true, |_, _| {
+            anyhow::bail!("injected failure")
+        })
+        .unwrap_err();
+    assert!(error.to_string().contains("publish model-pack removal state"));
+    assert!(models.join(&active.component).join("semantic-pack.json").is_file());
+    assert_eq!(
+        load_state(&models).unwrap().packs["example/model"].active.component,
+        active.component
+    );
+}
+
+#[test]
+fn manifest_removal_of_a_managed_pack_updates_its_ledger() {
+    let directory = tempfile::tempdir().unwrap();
+    let models = directory.path().join("models");
+    let sources = directory.path().join("sources");
+    fs::create_dir_all(&models).unwrap();
+    fs::create_dir_all(&sources).unwrap();
+    activate(&models, &candidate(&sources, "v1", "1", "first"), ImportMode::Install);
+    let manifest = active_manifest(&models, Some("example/model")).unwrap();
+    super::removal::remove(&manifest).unwrap();
+    assert!(!manifest.parent().unwrap().exists());
+    assert!(load_state(&models).unwrap().packs.is_empty());
 }
