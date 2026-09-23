@@ -111,7 +111,7 @@ jobs:
 
       - name: Verify public suite harness
         continue-on-error: true
-        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite verify.repository --out ci-artifacts/results/verify-repository.json -- "$SKWD_VERIFY_ROOT/scripts/test-all.sh"
+        run: python3 "$SKWD_VERIFY_ROOT/scripts/ci-report.py" wrap --suite verify.repository --out ci-artifacts/results/verify-repository.json -- env "PATH=$SKWD_LENS_TEST_ENV/bin:$PATH" "$SKWD_VERIFY_ROOT/scripts/test-all.sh"
 
       - name: Record deliberate operator coverage
         if: always()
