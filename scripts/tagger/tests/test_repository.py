@@ -68,7 +68,7 @@ class RepositoryTests(unittest.TestCase):
     def test_private_checkout_uses_restricted_token_without_persisting_it(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         checkout = """          repository: liixini/skwd-verify
-          ref: 6c8fc9023e41a2d71fed44de4f7b7313d0f7fb17
+          ref: 8142b83b05cb927fe10d027b214c7ea517efc48d
           path: .skwd-verify
           token: ${{ secrets.SKWD_SUITE_READ_TOKEN }}
           persist-credentials: false
