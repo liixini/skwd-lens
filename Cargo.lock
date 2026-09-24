@@ -954,7 +954,7 @@ checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
 name = "skwd-lens"
-version = "1.0.0-beta.18"
+version = "1.0.0-beta.20"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -973,7 +973,7 @@ dependencies = [
 
 [[package]]
 name = "skwd-lens-proto"
-version = "1.0.0-beta.18"
+version = "1.0.0-beta.20"
 dependencies = [
  "serde",
  "serde_json",
