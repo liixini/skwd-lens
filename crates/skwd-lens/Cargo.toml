@@ -13,8 +13,8 @@ bitflags = { version = "2", features = ["std"] }
 anyhow.workspace = true
 image.workspace = true
 memmap2.workspace = true
-ort = { version = "=2.0.0-rc.12", default-features = false, features = [
-    "api-24",
+ort = { version = "=2.0.0-rc.15", default-features = false, features = [
+    "api-27",
     "load-dynamic",
     "ndarray",
     "std",

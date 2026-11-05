@@ -13,6 +13,7 @@ use sha2::{Digest, Sha256};
 
 use super::{
     Manifest, TextProjection, TextTokenizer, TokenEmbeddingTable, load_cpu_session, load_manifest,
+    load_runtime,
 };
 
 mod catalog;
@@ -109,11 +110,9 @@ fn validate_pack_root(root: &Path, runtime: &Path, threads: usize) -> anyhow::Re
         .as_ref()
         .map(|model| pack_file(&root, &model.path, "text projection"))
         .transpose()?;
-    ort::init_from(&runtime)
-        .with_context(|| format!("load ONNX Runtime {}", runtime.display()))?
-        .commit();
+    let environment = load_runtime(&runtime)?;
     {
-        let session = load_cpu_session(&image_model, threads, "image")?;
+        let session = load_cpu_session(&environment, &image_model, threads, "image")?;
         require_input(&session, &manifest.image.input, "image")?;
         if let Some(name) = &manifest.image.pixel_attention_mask {
             require_input(&session, name, "image")?;
@@ -124,7 +123,7 @@ fn validate_pack_root(root: &Path, runtime: &Path, threads: usize) -> anyhow::Re
         require_output(&session, &manifest.image.output, "image")?;
     }
     {
-        let session = load_cpu_session(&text_model, threads, "text")?;
+        let session = load_cpu_session(&environment, &text_model, threads, "text")?;
         require_input(&session, &manifest.text.input, "text")?;
         if let Some(name) = &manifest.text.attention_mask {
             require_input(&session, name, "text")?;

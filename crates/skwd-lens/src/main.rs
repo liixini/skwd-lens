@@ -7,7 +7,7 @@ use std::time::Instant;
 
 use anyhow::{Context, ensure};
 use memmap2::Mmap;
-use ort::{session::Session, value::Tensor};
+use ort::{environment::Environment, session::Session, value::Tensor};
 use sentencepiece_rs::SentencePieceProcessor;
 use serde::{Deserialize, Serialize};
 use skwd_lens_proto::{
@@ -285,9 +285,7 @@ impl Engine {
             format!("resolve semantic manifest {}", arguments.manifest.display())
         })?;
         let manifest = load_manifest(&manifest_path)?;
-        ort::init_from(&arguments.runtime)
-            .with_context(|| format!("load ONNX Runtime {}", arguments.runtime.display()))?
-            .commit();
+        let environment = load_runtime(&arguments.runtime)?;
 
         let index_started = Instant::now();
         let index = SemanticIndex::load(&arguments.index)?;
@@ -322,7 +320,7 @@ impl Engine {
             .map(|model| TextProjection::load(&resolve(root, &model.path), model))
             .transpose()?;
         let model_started = Instant::now();
-        let session = load_cpu_session(&model_path, arguments.threads, "text")?;
+        let session = load_cpu_session(&environment, &model_path, arguments.threads, "text")?;
         let tokenizer = TextTokenizer::load(&tokenizer_path, manifest.text.eos_token)?;
         let model_load_ms = model_started.elapsed().as_secs_f64() * 1_000.0;
         Ok(Self {
@@ -666,8 +664,21 @@ fn relevant_results(
     ranked
 }
 
-fn load_cpu_session(path: &Path, threads: usize, model: &str) -> anyhow::Result<Session> {
-    let mut builder = Session::builder()?
+fn load_runtime(runtime: &Path) -> anyhow::Result<Environment> {
+    ort::init_from(runtime)
+        .with_context(|| format!("load ONNX Runtime {}", runtime.display()))?
+        .with_telemetry(false)
+        .build()
+        .map_err(|error| anyhow::anyhow!(error.to_string()))
+}
+
+fn load_cpu_session(
+    environment: &Environment,
+    path: &Path,
+    threads: usize,
+    model: &str,
+) -> anyhow::Result<Session> {
+    let mut builder = Session::builder(environment)?
         .with_intra_threads(threads)
         .map_err(|error| anyhow::anyhow!(error.to_string()))?
         .with_inter_threads(1)
@@ -724,12 +735,10 @@ fn build_index(arguments: &Arguments) -> anyhow::Result<()> {
     let mut session = if missing == 0 {
         None
     } else {
-        ort::init_from(&arguments.runtime)
-            .with_context(|| format!("load ONNX Runtime {}", arguments.runtime.display()))?
-            .commit();
+        let environment = load_runtime(&arguments.runtime)?;
         let root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
         let model_path = resolve(root, &manifest.image.model);
-        Some(load_cpu_session(&model_path, arguments.threads, "image")?)
+        Some(load_cpu_session(&environment, &model_path, arguments.threads, "image")?)
     };
     for (entry, existing) in planned {
         let detail = entry.key.clone();
